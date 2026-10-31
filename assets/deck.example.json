@@ -1,0 +1,628 @@
+{
+  "meta": {
+    "title": "智能体方向组会汇报",
+    "footer": "智能体方向 · 第 12 周组会",
+    "presenter": "汇报人：刘同学",
+    "date": "2026-10-31",
+    "cover_meta": [
+      "智能体方向 · 第 12 周组会",
+      "汇报人：刘同学　　2026-10-31"
+    ]
+  },
+  "cover": {
+    "kicker": "研究生组会汇报",
+    "title": "智能体框架的编排范式与记忆机制",
+    "subtitle": "文献精读 2 篇 · 实验 2 组 · 项目进展 1 项"
+  },
+  "agenda": true,
+  "parts": [
+    {
+      "kind": "paper",
+      "title": "论文阅读汇报",
+      "subtitle": "两篇编排范式代表作：ReAct 与 Reflexion",
+      "pages": [
+        {
+          "type": "table",
+          "roles": [
+            "summary_table"
+          ],
+          "kicker": "论文阅读汇报 · 文献汇总",
+          "title": "两篇文献的位置与一句话结论",
+          "columns": [
+            "文献标题",
+            "出处",
+            "发布时间",
+            "一句话核心内容"
+          ],
+          "rows": [
+            [
+              "ReAct: Synergizing Reasoning and Acting in Language Models",
+              "ICLR 2023（CCF-A）",
+              "2022-10",
+              "把推理与行动交替写成同一条轨迹，让外部观测改写下一步推理的前提。"
+            ],
+            [
+              "Reflexion: Language Agents with Verbal Reinforcement Learning",
+              "NeurIPS 2023（CCF-A）",
+              "2023-03",
+              "用语言化的自我反思替代梯度更新，把失败经验写进下一轮的上下文。"
+            ]
+          ],
+          "col_widths": [
+            0.34,
+            0.22,
+            0.12,
+            0.32
+          ],
+          "caption": "汇总表：先建立位置感，再逐篇展开。行数需与论文篇数一致。"
+        }
+      ],
+      "units": [
+        {
+          "name": "ReAct：推理与行动的交替",
+          "subtitle": "ICLR 2023",
+          "pages": [
+            {
+              "type": "cards",
+              "roles": [
+                "name",
+                "source"
+              ],
+              "title": "ReAct：把推理与行动编进同一条轨迹",
+              "kicker": "论文阅读汇报 · 1/2",
+              "entries": [
+                {
+                  "label": "文献标题",
+                  "value": "ReAct: Synergizing Reasoning and Acting in Language Models",
+                  "bold": true,
+                  "strong": true
+                },
+                {
+                  "label": "出处",
+                  "value": "ICLR 2023（International Conference on Learning Representations）"
+                },
+                {
+                  "label": "期刊/会议等级",
+                  "value": "CCF-A 类会议；机器学习领域公认顶会（依据：CCF 2022 推荐目录）"
+                },
+                {
+                  "label": "发布时间",
+                  "value": "arXiv 2022-10-06；ICLR 2023 正式发表"
+                },
+                {
+                  "label": "作者与单位",
+                  "value": "Shunyu Yao 等，普林斯顿大学 / Google Research"
+                },
+                {
+                  "label": "一句话定位",
+                  "value": "在一个循环里同时生成「思考」与「动作」，用环境观测修正推理，而不是先想完再动手。"
+                }
+              ],
+              "cols": 2,
+              "source": "原文 p.1 摘要、p.2 图 1"
+            },
+            {
+              "type": "image",
+              "roles": [
+                "thesis",
+                "argument",
+                "problem"
+              ],
+              "title": "作者主张：思考与行动必须交替发生",
+              "kicker": "论文阅读汇报 · 1/2",
+              "bullets": [
+                "总观点：__只推理不行动__会让模型在没有外部反馈时自圆其说；__只行动不推理__则无法把观测组织成计划。",
+                "要解决的问题：多跳问答与交互式决策中，模型缺少「检验假设」的手段，错误会沿着推理链累积。",
+                "论证链：前提是幻觉源于缺少观测 → 假设是交替可引入观测 → 可检验推论是轨迹里应出现「观测改写后续思考」",
+                "关键设计：Thought / Action / Observation 三元组循环，最多迭代 N 轮后由模型给出答案。"
+              ],
+              "image": "figs/react_fig1.png",
+              "caption": "图 1　ReAct 的 Thought–Act–Observation 循环（原文 p.2 Figure 1）",
+              "source": "原文 p.2 Figure 1",
+              "evidence": true,
+              "image_ratio": 0.52,
+              "takeaway": "它不是在提示里加一句「请先思考」，而是把环境观测变成推理的输入。"
+            },
+            {
+              "type": "table",
+              "roles": [
+                "experiment",
+                "mapping",
+                "contribution"
+              ],
+              "title": "每个实验都在检验同一条推论",
+              "kicker": "论文阅读汇报 · 1/2",
+              "columns": [
+                "实验",
+                "设置",
+                "印证的观点",
+                "证据位置"
+              ],
+              "rows": [
+                [
+                  "HotpotQA 多跳问答",
+                  "与 CoT、Act-only 对比，同一骨干模型",
+                  "交替能减少推理链上的幻觉累积",
+                  "Table 1 / p.5"
+                ],
+                [
+                  "Feverous 事实核查",
+                  "同上，加人工抽查轨迹",
+                  "观测能让模型自我纠错，而非自洽",
+                  "Table 2 / p.6"
+                ],
+                [
+                  "ALFWorld 家务决策",
+                  "与模仿学习、BUTLER 对比成功率",
+                  "需要多步动作时优势更明显",
+                  "Table 3 / p.7"
+                ],
+                [
+                  "消融：去掉 Thought",
+                  "只保留 Action–Observation",
+                  "推理步骤本身承担计划与纠错",
+                  "Table 4 / p.8"
+                ]
+              ],
+              "col_widths": [
+                0.22,
+                0.26,
+                0.34,
+                0.18
+              ],
+              "takeaway": "贡献：给出了「推理—行动耦合」的最小可复用接口，后续 AutoGen、Voyager 都沿用这一形状。",
+              "source": "原文 p.5–8 表 1–4"
+            },
+            {
+              "type": "bullets",
+              "roles": [
+                "insight"
+              ],
+              "title": "对我的启发：先把循环画对，再谈调优",
+              "kicker": "论文阅读汇报 · 1/2",
+              "bullets": [
+                "可迁移的方法：把「观测是否改写下一步」当指标，比只看准确率更能定位失效点。",
+                {
+                  "text": "可借鉴的实验设计：消融不是删模块，而是删「机制」——去掉 Thought 检验的是推理的计划作用",
+                  "level": 1
+                },
+                "可延伸的问题：观测噪声很大时，交替是否会放大错误？原文未系统回答。",
+                "我认为的局限：循环轮数与 token 成本强耦合，预算受限时停在哪一轮，论文没答。"
+              ],
+              "takeaway": "这套「假设 → 可检验推论 → 消融对应机制」的写法，我可以直接搬到自己的实验章节。",
+              "source": "个人判断，非原文结论"
+            }
+          ]
+        },
+        {
+          "name": "Reflexion：语言化的自我反思",
+          "subtitle": "NeurIPS 2023",
+          "pages": [
+            {
+              "type": "cards",
+              "roles": [
+                "name",
+                "source"
+              ],
+              "title": "Reflexion：用语言反思替代梯度更新",
+              "kicker": "论文阅读汇报 · 2/2",
+              "entries": [
+                {
+                  "label": "文献标题",
+                  "value": "Reflexion: Language Agents with Verbal Reinforcement Learning",
+                  "bold": true,
+                  "strong": true
+                },
+                {
+                  "label": "出处",
+                  "value": "NeurIPS 2023（Conference on Neural Information Processing Systems）"
+                },
+                {
+                  "label": "期刊/会议等级",
+                  "value": "CCF-A 类会议；NeurIPS 为机器学习三大顶会之一"
+                },
+                {
+                  "label": "发布时间",
+                  "value": "arXiv 2023-03-20；NeurIPS 2023 正式发表"
+                },
+                {
+                  "label": "一句话定位",
+                  "value": "把失败轨迹转成一段自然语言反思，存进记忆，供下一轮复用——不更新任何参数。"
+                }
+              ],
+              "cols": 2,
+              "source": "原文 p.1 摘要"
+            },
+            {
+              "type": "image",
+              "roles": [
+                "thesis",
+                "argument",
+                "problem"
+              ],
+              "title": "主张：反思是一种不落参数的强化信号",
+              "kicker": "论文阅读汇报 · 2/2",
+              "bullets": [
+                "要解决的问题：试错型任务里，模型重复犯同一个错，因为没有跨轮次的经验载体。",
+                "作者观点：把「为什么失败」写成语言，比给一个标量奖励更能指导下一次行动。",
+                "论证链：失败轨迹 → 语言反思 → 写入情景记忆 → 下一轮检索到它 → 行为改变",
+                "可检验推论：若反思有效，去掉反思模块后同一任务的成功率应显著回落。"
+              ],
+              "image": "figs/reflexion_fig2.png",
+              "caption": "图 2　Actor / Evaluator / Self-Reflection 三模块与记忆回流（原文 p.3 Figure 2）",
+              "source": "原文 p.3 Figure 2",
+              "evidence": true,
+              "image_ratio": 0.5,
+              "takeaway": "它把「学习」从参数空间搬到了上下文空间，代价是每轮都要多付一段上下文。"
+            },
+            {
+              "type": "table",
+              "roles": [
+                "experiment",
+                "mapping",
+                "contribution"
+              ],
+              "title": "实验：三处改动分别对应哪条主张",
+              "kicker": "论文阅读汇报 · 2/2",
+              "columns": [
+                "实验",
+                "设置",
+                "印证的观点",
+                "证据位置"
+              ],
+              "rows": [
+                [
+                  "HumanEval 代码生成",
+                  "Reflexion vs 无反思基线，pass@1",
+                  "语言反思可替代梯度信号",
+                  "Table 1 / p.5"
+                ],
+                [
+                  "ALFWorld / HotpotQA",
+                  "与 ReAct、CoT 基线对比",
+                  "反思对长程任务增益更大",
+                  "Table 2 / p.6"
+                ],
+                [
+                  "消融：去掉记忆",
+                  "只反思不存储",
+                  "增益来自跨轮复用，不是单轮提示",
+                  "§4.3 / p.7"
+                ],
+                [
+                  "成本分析",
+                  "统计额外 token 与轮数",
+                  "收益与预算存在明显权衡",
+                  "§4.4 / p.8"
+                ]
+              ],
+              "col_widths": [
+                0.24,
+                0.28,
+                0.3,
+                0.18
+              ],
+              "takeaway": "贡献：把「经验」变成了可检查、可编辑的文本对象——这也是它后来被大量工程框架采用的原因。",
+              "source": "原文 p.5–8"
+            },
+            {
+              "type": "bullets",
+              "roles": [
+                "insight"
+              ],
+              "title": "对我的启发：把「经验」做成可审计的对象",
+              "kicker": "论文阅读汇报 · 2/2",
+              "bullets": [
+                "启发一：既然反思是文本，就可以人工审计和编辑——这为「安全可控」留了接口。",
+                "启发二：反思质量取决于评价器，评价器错了会把错误经验固化，这一点原文只在局限里提了一句。",
+                "启发三：与我的综述主题直接相关——它把「上下文管理」从工程技巧提升为机制设计。",
+                "下一步：我想复现「去掉记忆」的消融，确认增益确实来自跨轮复用。"
+              ],
+              "takeaway": "两篇合起来：ReAct 解决「一轮内怎么想」，Reflexion 解决「跨轮怎么记住」。",
+              "source": "个人判断，非原文结论"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "experiment",
+      "title": "实验报告",
+      "subtitle": "两组在跑实验：记忆消融与编排范式对比",
+      "units": [
+        {
+          "name": "长上下文记忆消融",
+          "pages": [
+            {
+              "type": "cards",
+              "roles": [
+                "name",
+                "purpose"
+              ],
+              "title": "实验一：记忆模块到底贡献了多少",
+              "kicker": "实验报告 · 1/2",
+              "entries": [
+                {
+                  "label": "实验名称",
+                  "value": "长上下文记忆消融（MemAgent-lite）",
+                  "bold": true,
+                  "strong": true
+                },
+                {
+                  "label": "实验目的",
+                  "value": "在固定 token 预算下，判断增益来自「更长的上下文」还是「有选择地写入记忆」。"
+                },
+                {
+                  "label": "对照设置",
+                  "value": "A：全量上下文　B：滑动窗口　C：记忆写入（本方法）"
+                },
+                {
+                  "label": "数据与指标",
+                  "value": "LongBench 三个子集；指标为 EM 与平均 token 消耗"
+                }
+              ],
+              "cols": 2,
+              "source": "实验记录 E-2310"
+            },
+            {
+              "type": "image",
+              "roles": [
+                "setup",
+                "finding"
+              ],
+              "title": "结果：预算相同时，选择性写入更稳",
+              "kicker": "实验报告 · 1/2",
+              "bullets": [
+                "核心发现：同预算下 C 比 A 高 3.8 个点 EM，token 少 22%。",
+                "子集差异：需要跨段指代的任务增益最大，单段抽取类几乎持平。",
+                "异常：B（滑窗）在长文档上崩得比预期快，疑似截断丢掉了关键定义。"
+              ],
+              "image": "figs/exp1_bar.png",
+              "caption": "图 1　三组设置的 EM 与 token 消耗（自绘，数据见实验记录 E-2310）",
+              "source": "实验记录 E-2310 结果表",
+              "evidence": true,
+              "image_ratio": 0.58,
+              "takeaway": "结论支持「写入策略」而非「上下文长度」是主要增益来源。"
+            },
+            {
+              "type": "columns",
+              "roles": [
+                "limit",
+                "next",
+                "conclusion"
+              ],
+              "title": "局限与下一步",
+              "kicker": "实验报告 · 1/2",
+              "columns": [
+                {
+                  "heading": "局限",
+                  "bullets": [
+                    "只跑了 3 个子集，未覆盖多语言",
+                    "写入阈值仍是手调",
+                    "三个子集都来自英文语料"
+                  ]
+                },
+                {
+                  "heading": "后续可做",
+                  "bullets": [
+                    "补 2 个子集 + 1 个中文集",
+                    "把阈值做成可学习参数",
+                    "顺手把随机种子固定成 3 组"
+                  ]
+                },
+                {
+                  "heading": "结论",
+                  "bullets": [
+                    "预算受限时记忆写入有稳定收益",
+                    "暂不能推广到短文本任务",
+                    "短文本任务仍需单独验证"
+                  ]
+                }
+              ],
+              "source": "实验记录 E-2310"
+            }
+          ]
+        },
+        {
+          "name": "编排范式对比（Loop vs Graph）",
+          "pages": [
+            {
+              "type": "cards",
+              "roles": [
+                "name",
+                "purpose"
+              ],
+              "title": "实验二：Loop 与 Graph 两种编排的代价",
+              "kicker": "实验报告 · 2/2",
+              "entries": [
+                {
+                  "label": "实验名称",
+                  "value": "编排范式对比：ReAct 循环 vs LangGraph 显式图",
+                  "bold": true,
+                  "strong": true
+                },
+                {
+                  "label": "实验目的",
+                  "value": "在同一任务集上量化「自由度」带来的收益与可归因性的损失。"
+                },
+                {
+                  "label": "实验设置",
+                  "value": "同一骨干模型、同一工具集；任务 60 条；每组 3 个随机种子"
+                },
+                {
+                  "label": "记录项",
+                  "value": "成功率、平均步数、失败可归因率（人工判定）"
+                }
+              ],
+              "cols": 2,
+              "source": "实验记录 E-2401"
+            },
+            {
+              "type": "image",
+              "roles": [
+                "setup",
+                "finding"
+              ],
+              "title": "初步数据：Graph 更可控，Loop 上限更高",
+              "kicker": "实验报告 · 2/2",
+              "bullets": [
+                "Loop 成功率 71.7%，平均 8.4 步，可归因率 52%。",
+                "Graph 固定 5 节点：68.3%、6.1 步、归因 81%。",
+                "Graph + 回退边：73.3%、7.2 步、归因 76%。",
+                {
+                  "text": "解读：可归因性与自由度此消彼长，回退边是折中点。",
+                  "level": 1
+                }
+              ],
+              "image": "figs/exp2_bar.png",
+              "caption": "图 1　三种设置的成功率与可归因率（自绘，数据见实验记录 E-2401）",
+              "source": "实验记录 E-2401 结果表",
+              "evidence": true,
+              "image_ratio": 0.56,
+              "takeaway": "下一步要把样本量翻三倍，确认「回退边」的优势不是噪声。"
+            },
+            {
+              "type": "bullets",
+              "roles": [
+                "limit",
+                "next",
+                "conclusion"
+              ],
+              "title": "局限、后续与结论",
+              "kicker": "实验报告 · 2/2",
+              "bullets": [
+                "局限：60 条任务偏少；可归因率由单人判定，缺标注一致性检验。",
+                "后续：扩充到 200 条并双人标注；把「回退边」的触发条件做成可学习策略。",
+                "结论：__Graph 换可解释，Loop 换上限__，选择取决于组会上要回答的是「为什么失败」还是「能不能做成」。"
+              ],
+              "source": "实验记录 E-2401"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "project",
+      "title": "项目进展汇报",
+      "subtitle": "一个科研项目 + 一个委托项目",
+      "units": [
+        {
+          "name": "国自然面上子课题 2：编排范式可归因性评测",
+          "pages": [
+            {
+              "type": "image",
+              "roles": [
+                "name",
+                "progress"
+              ],
+              "title": "项目：面向长程任务的智能体编排（子课题 2）",
+              "bullets": [
+                "国家自然科学基金面上项目，6220XXXX，2025.01–2028.12；本人负责子课题 2。",
+                "任务书 4 个节点：已完成 2 个，节点 3（归因评测）进行中。",
+                "结题指标「论文 2 篇」：已投 1 篇在审、1 篇在写；标注 3 200 / 5 000 张。"
+              ],
+              "image": "figs/proj_milestones.png",
+              "caption": "图 1　任务书四个节点的完成情况（据项目周报 W12）",
+              "source": "项目周报 W12",
+              "evidence": true,
+              "image_ratio": 0.56,
+              "takeaway": "节点 1–2 已交账，节点 3 的风险在标注进度而非方法。"
+            },
+            {
+              "type": "bullets",
+              "roles": [
+                "problem"
+              ],
+              "title": "当前卡点：标注跟不上，方法不收敛",
+              "bullets": [
+                "卡点一：标注只剩 2 人，按当前速度 5 000 张要到 12 月中，晚于节点 3 的 11-20。",
+                {
+                  "text": "试过：模型预标注再人工改，速度 +40%，但噪声样本返工率高",
+                  "level": 1
+                },
+                "卡点二：Loop 编排步数 >12 后成功率从 71% 掉到 43%，疑似记忆写入污染决策。",
+                "卡点三：合作单位的第二批轨迹数据未到，对方称 11 月上旬提供。"
+              ],
+              "source": "项目周报 W12"
+            },
+            {
+              "type": "bullets",
+              "roles": [
+                "plan"
+              ],
+              "title": "下一步：先交节点材料，再定位断崖",
+              "bullets": [
+                "本周：预标注流水线加一道噪声过滤，把返工率压到 10% 以内。",
+                "11-20 前：节点 3 中期材料交科技处，含评测方案与现有 3 200 张结果。",
+                "两周内：两组消融（步数上限 / 写入阈值），产出一页断崖定位结论。",
+                "需要老师定夺：指标能否用 1 篇 SCI + 1 篇顶会替代原定 2 篇 SCI。"
+              ],
+              "takeaway": "卡点在标注人力与外部数据，方法侧已收敛到一组消融。",
+              "source": "项目周报 W12 计划栏"
+            }
+          ]
+        },
+        {
+          "name": "水务集团委托：管网缺陷智能识别系统",
+          "pages": [
+            {
+              "type": "image",
+              "roles": [
+                "name",
+                "progress"
+              ],
+              "title": "项目：管网缺陷智能识别系统（委托开发）",
+              "bullets": [
+                "XX 市水务集团委托，合同期 2026.03–2026.12；本人任算法负责人。",
+                "里程碑：M1 需求确认（已签）→ M2 原型（已验收）→ M3 接口联调（70%）→ M4 试运行（未开始）。",
+                "已交付 3 个版本：v0.1 离线推理、v0.2 批量报告、v0.3 现场端 SDK。"
+              ],
+              "image": "figs/proj_delivery.png",
+              "caption": "图 1　四个合同里程碑的当前状态（截至 10-31）",
+              "source": "项目周报 W12",
+              "evidence": true,
+              "image_ratio": 0.56,
+              "takeaway": "M3 受甲方接口延迟影响，M4 存在顺延一周的风险。"
+            },
+            {
+              "type": "bullets",
+              "roles": [
+                "problem"
+              ],
+              "title": "当前卡点：等甲方开权限，需求还在长",
+              "bullets": [
+                "卡点一：甲方历史影像库调阅权限未开通，已催两次，对接人承诺本周内。",
+                {
+                  "text": "影响：真实数据联调无法开始，先用 200 张样例图跑通流程",
+                  "level": 1
+                },
+                "卡点二：10 月新增「缺陷等级自动判定」需求，超出原合同范围，约 +3 周工作量。",
+                "卡点三：现场端为 4 年前安卓机，v0.3 的 SDK 推理 2.1 s/张，超 1.5 s 验收线。"
+              ],
+              "source": "项目周报 W12"
+            },
+            {
+              "type": "bullets",
+              "roles": [
+                "plan"
+              ],
+              "title": "下一步：先保 M3 演示，范围变更交老师谈",
+              "bullets": [
+                "本周：样例数据跑通全流程，出联调自测报告 v1。",
+                "权限到位后一周内：真实数据联调，问题单收敛到 5 条以内。",
+                "11-15：M3 验收演示，样例数据与已开通部分的真实数据一起跑。",
+                "待老师与甲方确认：新增「等级判定」是否走变更单、M4 是否顺延一周。"
+              ],
+              "takeaway": "内部按合同推进，两个待决事项需要老师出面。",
+              "source": "项目周报 W12 计划栏"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "end": {
+    "title": "谢谢，请老师和同学批评指正",
+    "subtitle": "附：文献表与实验记录在共享目录，欢迎会后取用"
+  }
+}

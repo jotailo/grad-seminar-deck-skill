@@ -1,0 +1,217 @@
+---
+name: grad-seminar-deck
+display_name: 研究生组会 PPT（论文 / 实验 / 项目）
+description: 把一次研究生组会汇报做成可直接讲的 PPT，覆盖三类内容——论文阅读汇报（多篇论文、文献汇总表、观点与论证、实验↔观点对应、个人启发）、实验报告（实验名称/目的/设置/核心发现/局限/后续/结论）、项目进展汇报（科研项目或导师接的委托/外包项目：名称/进度/问题/下一步）——每篇论文、每组实验、每个项目各占 2–4 页，按种类分区组织，并从原文截取完整图表作证据，生成后逐项自检（内容、字号、遮挡、裁切）。触发词：组会PPT、组会汇报、文献汇报PPT、讲文献、journal club、实验报告PPT、项目进展汇报PPT、seminar slides。
+agent_created: true
+version: 1.0.0
+author: WorkBuddy
+---
+
+# 研究生组会 PPT
+
+把一次组会（或答辩、周报）要讲的东西，做成一份**能站起来讲、经得起追问**的 `.pptx`。
+不是读书笔记，也不是把 Word 粘进幻灯片。
+
+用这个技能之前先认清三件最容易做砸的事，本技能的所有设计都在防它们：
+
+1. **结构跑偏**：讲成论文复述，缺「实验如何印证观点」和「对我有什么启发」。
+2. **证据不足 / 证据残缺**：满页文字没有原文图表；截了图但表头被切、坐标轴断开。
+3. **交付不检查**：字太小、图和图注压在一起、页数失控，投到屏幕上才发现。
+
+## 何时使用
+
+使用：
+- 「做一份组会汇报 PPT」「讲两篇文献」「下周 journal club 轮到我」
+- 「这周的实验做个报告」「项目周报的 PPT」
+- 「基金项目中期检查要过一遍进度」「老师那个横向/委托项目我要报一下进展」
+- 一份 PPT 同时含论文 + 实验 + 项目（混排），或只含其中一类
+
+不使用：
+- 只要论文总结 / 精读笔记 → 用 `bilingual-paper-reader` 或直接写 Markdown
+- 只想改已有 PPT 的排版或文字 → 用 `workbuddy-pptx`
+- 写论文、投稿、审稿 → 用 `academic-paper` / `academic-paper-reviewer`
+
+## 五条硬性要求（对应验收标准，逐条可查）
+
+| # | 要求 | 落地方式 | 谁检查 |
+|---|---|---|---|
+| 1 | 三类内容各自成章；每篇论文 / 每组实验 / 每个项目 **2–4 页** | deck.json 用 `parts → units → pages` 三级结构；`build_deck.py` 越界直接报错 | `check_structure.py` |
+| 2 | 从原文截取**完整**图表作证据 | 整页渲染 → 候选框 → 裁切 → 四条边墨迹检测 → 审片图复审 | `crop_figure.py` / `contact_sheet.py` |
+| 3 | 简洁美观、不要花哨 | 固定设计系统：白底、单一强调色、无渐变、无阴影、无剪贴画 | `build_deck.py`（不接受逐页临时改样式） |
+| 4 | 生成后逐项核对内容、字体、字号、遮挡 | 三道关：结构检查 → 版面体检 → 渲染目检 | 三个脚本 + 人工看图 |
+| 5 | 一份 PPT 可含多个种类，按种类分区 | 自动插入种类分区页 + 目录 + 每页角标（`论文阅读汇报 · 2/3`） | `build_deck.py` |
+
+## 工作流
+
+所有命令在本技能目录下执行（先 `cd` 到本 SKILL.md 所在目录）。产物放用户工作目录下**一个独立文件夹**，不要散落。
+脚本依赖：`python-pptx`、`Pillow`、`numpy`、`lxml`（缺失时脚本会明确提示要装什么）。
+
+### 第 0 步：问清五件事，再动手
+
+| 要问的 | 默认值（缺省就按这个走，并在交付时说明） |
+|---|---|
+| 讲哪几篇论文 / 哪几组实验 / 哪个项目？原文在哪（本地 PDF / arXiv / 链接）？ | 必须问清，不能默认 |
+| 项目是**科研项目**（基金/课题，按任务书节点对账）还是**导师接的委托/外包项目**（按合同里程碑和交付物对账）？ | 必须问清：两者的「进度」和「卡点」写法不同，见 `references/content-project.md` |
+| 汇报语言 | 中文为主，专有名词保留英文 |
+| 时长 | 15–20 分钟 |
+| 听众 | 导师 + 同门（可以讲机制、可以讲失败） |
+| 是否有现成模板 / 配色 | 无 → 用本技能设计系统 |
+
+再确认**种类构成**：只有论文？论文 + 实验？三类都有？这决定 deck.json 的 `parts` 有几个。
+论文若给的是 arXiv 链接，先下载 PDF；只有网页摘要没有 PDF 时，明确告知无法截取原图，改为「文字证据 + 说明图片不可得」，**绝不自己画一张图冒充原文**。
+
+### 第 1 步：读原文，抽取内容（先想清楚讲什么，再碰排版）
+
+按种类取对应的抽取清单，逐条填，填不出来说明还没读透，回去补读而不是硬编：
+
+- 论文：`references/content-paper.md`
+- 实验：`references/content-experiment.md`
+- 项目：`references/content-project.md`
+
+同时记下**图表编号 ↔ 页码**的对应（第 2 步要按这个去截图）。用 `workbuddy-pdf` 技能取结构化正文：
+
+```bash
+sh "<workbuddy-pdf 技能目录>/scripts/run.sh" "/abs/paper.pdf" "$WORK/content.md" -f md -q
+```
+→ 把论文转成 Markdown 并静默运行，产出正文 + 图号表号 + 页码，用来定位「哪张图在哪一页」。
+
+### 第 2 步：截原文图表（这一步决定 PPT 的可信度）
+
+完整做法与判据见 `references/figure-capture.md`，最短路径：
+
+```bash
+# 1) 整页渲染，300dpi（双栏小字多时用 400）
+sh "<workbuddy-pdf 技能目录>/scripts/run.sh" "/abs/paper.pdf" "$WORK/pages" -f png --dpi 300
+```
+→ 每页一张 PNG，作为裁图的底图；**不要**用 `--image-dir` 直接抽图（它按识别结果裁，边缘不保证完整）。
+
+```bash
+python scripts/crop_figure.py --page pages/p05.png --propose
+```
+→ 打印这一页的内容块候选框（相对比例），挑出目标图/表的那一行。
+
+```bash
+python scripts/crop_figure.py --page pages/p05.png --bbox 0.06,0.10,0.48,0.36 --out figs/paper1_fig1.png
+```
+→ 按框裁出图片并**立刻判定四条边有没有墨迹跨过边界**：`[OK]` 才算完整；`[FAIL]` 会直接给出建议坐标。
+
+```bash
+python scripts/contact_sheet.py figs/*.png -o figs/_sheet.png
+```
+→ 把所有截图拼成一张审片图，一眼看出哪张被切（红框标 EDGE）。逐张看完再进下一步。
+
+### 第 3 步：写 deck.json（先文字，后版式）
+
+字段与版式见 `references/deck-schema.md`，完整可运行样例见 `assets/deck.example.json`（含三类内容）。
+
+规矩：
+- **一页一个论点**。一级要点超过 6 条，或正文超过 260 字，就拆页或删句。
+- 正文写**判断句**，不写名词罗列：写「观测取回的片段改写了下一轮推理的前提」，不写「观测、推理、循环」。
+- 每个单元 2–4 页，页数由内容决定，不由「想放几张图」决定。
+- 每页 `source` 字段写出处（如 `原文 p.5 Table 1`），会渲染到页脚，被追问时能翻回去。
+- 期刊/会议等级必须先核实（CCF 目录 / 中科院分区 / JCR / 会议官网）。**查不到就写「未核实」**，绝不凭印象给分区。
+
+### 第 4 步：生成，先过内容关再过版面关
+
+```bash
+python scripts/check_structure.py deck.json
+```
+→ 查「讲全了没有」：三类各自的必备内容点、每单元 2–4 页、文献汇总表列与行数、证据图、期刊等级口径。`[FAIL]` 必须清零。
+
+```bash
+python scripts/build_deck.py deck.json -o 组会汇报.pptx
+```
+→ 生成 pptx，并自动插分区页/目录/页码；页数越界、图片缺失会直接报错退出；偏密、孤行、内容过稀会给 `[warn]`/`[hint]`。
+
+```bash
+python scripts/check_deck.py 组会汇报.pptx
+```
+→ 静态体检：文字溢出、字号过小、元素越界、图表被文字压住、插图 dpi 不足、空页。`[FAIL]` 必须清零。
+
+### 第 5 步：渲染成图片，逐页用眼睛看
+
+```bash
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render_deck.ps1 -Pptx "组会汇报.pptx"
+```
+→ 用本机 PowerPoint 逐页导出 PNG（输出到 `render/`）。然后**逐张看**，按 `references/self-check.md` 的四项核对：内容是否被遮挡、图注是否完整、字号是否清晰、有无空页或半页空白。
+
+没有 PowerPoint 时脚本会明确报错——此时**不要跳过目检**，改为人工打开逐页看，并在交付时说明「未做渲染目检」。
+
+### 第 6 步：交付
+
+- 交付 `组会汇报.pptx`，并附一句结构摘要（几个种类、几个单元、共几页）。
+- 说明所用默认（语言、时长）与未解决项（如「等级未核实」「第 3 篇论文缺原文图表」）。
+- 中间产物（`deck.json`、`figs/`、`render/`）留在同一文件夹，方便下周改。
+
+## 三类内容的页数配方
+
+**每单元 2–4 页是硬约束**，下面是经得起讲的分配，直接照抄再填内容：
+
+| 种类 | 页数 | 逐页分工（括号里是 `roles`，供检查脚本核对） |
+|---|---|---|
+| 论文（主论文，推荐 4 页） | 4 | ① 标题 + 出处 + 等级 + 一句话定位 `cards`（name, source）<br>② 观点/问题/论证链 + 原文框架图 `image`（thesis, problem, argument）<br>③ 实验设计与「实验↔观点」对应表 `table`（experiment, mapping, contribution）<br>④ 个人启发 + 一张关键结果图 `image`/`bullets`（insight） |
+| 论文（次要论文，3 页） | 3 | ① 标题+出处 `cards`（name, source）<br>② 观点/问题/论证 + 图 `image`（thesis, problem, argument）<br>③ 对应表 + 贡献 + 一句评价 `table`（experiment, mapping, contribution, insight） |
+| 论文（快讯式过稿，2 页） | 2 | ① 标题/出处/观点 `cards`（name, source, thesis, problem）<br>② 对应表 + 启发 `table`（experiment, mapping, insight）。需在单元里写 `"slim": true`，缺失点降级为提醒 |
+| 实验（3 页） | 3 | ① 名称 + 目的 + 设置 `cards`（name, purpose, setup）<br>② 核心发现 + 结果图 `image`（finding）<br>③ 局限/后续/结论 `columns`（limit, next, conclusion） |
+| 实验（4 页） | 4 | ①②同上；③ 与基线/消融的对照表 `table`（finding）；④ 局限/后续/结论 `columns`（limit, next, conclusion） |
+| 项目（3 页） | 3 | ① 名称 + 进度 + 进度图 `image`（name, progress）<br>② 问题 `bullets`（problem）<br>③ 下一步与规划 `bullets`（plan） |
+| 项目（4 页） | 4 | ① 名称 + 进度 `image`；② 已完成的关键判断 `columns`（progress）；③ 问题 `bullets`（problem）；④ 下一步 `bullets`（plan） |
+
+**「项目」只指有立项或合同的活**：科研项目（基金/课题，按任务书节点与结题指标对账）或导师接的委托/外包项目（按合同里程碑与交付物对账）。
+「读了几篇文献、写了多少字」属于个人学习量，归到论文类或实验类，不要当项目进展报。两类项目各自的写法见 `references/content-project.md`。
+
+多篇论文时，在论文类分区页之后、第一篇之前放**一页文献汇总表**（`table` + `roles: ["summary_table"]`），列固定为
+`文献标题 | 出处 | 发布时间 | 一句话核心内容`，行数必须等于论文篇数。
+
+## 版式选择（不要自己发明版式）
+
+| 要表达什么 | 用哪个 `type` |
+|---|---|
+| 封面 / 种类分区 / 目录 / 结束页 | `cover` / 由 `parts` 自动生成 / `agenda: true` / `end` |
+| 一组并列事实（标题、出处、等级、时间、目的、设置） | `cards`（2 列，`strong` 突出主项） |
+| 有逻辑先后的要点、观点、启发 | `bullets`（一级 ≤6 条） |
+| 原文图表作证据 | `image`（左图右文，必须写 `caption` + `source`） |
+| 对照关系（实验↔观点、方法对比、指标表） | `table`（列宽自己定，别让一格塞两行） |
+| 状态三分（进度 / 问题 / 下一步；局限 / 后续 / 结论） | `columns`（2–4 栏，每栏 2–3 条） |
+| 一句必须让全场记住的话 | `takeaway` 字段（挂在页脚上方，≤45 字） |
+
+设计系统固定：16:9、白底、强调色 `#2F5597`（可用 `--accent` 整体换色）、正文 18pt（自动在 14–22pt 间按版面调节）、
+页脚 10.5pt、任何文字不低于 10pt。**不要逐页改字体大小和颜色**——风格统一比单页好看更重要。
+
+## 三种汇报的证据要求（不一样）
+
+| 种类 | 证据从哪来 | 至少几张 |
+|---|---|---|
+| 论文 | 原文的图、表（含图注/表头/坐标轴） | 每篇 ≥1 张，方法框架图 + 关键结果图各一最稳 |
+| 实验 | 自己的结果图（曲线、柱状、消融表） | 每组 ≥1 张，优先给「对照」而不是只有最优那条线 |
+| 项目 | 里程碑甘特 / 节点完成度（A 类）或 交付物状态条（B 类）/ 系统架构图 | 建议 1 张；确实没有就写 `no_evidence_reason` |
+
+## 自检（交付前必做，见 references/self-check.md）
+
+1. **结构关**：`check_structure.py` 零 FAIL —— 内容点齐、页数守约、汇总表对得上。
+2. **版面关**：`check_deck.py` 零 FAIL —— 无溢出、无过小字号、无遮挡、图够清晰。
+3. **目检关**：渲染后逐页看 —— 遮挡、图注、字号、空页、对齐。机器查不出「不好看」。
+4. **事实关**：把每页出现的数字、作者名、期刊等级、结论方向，逐条对回原文；对不上的删掉或标「待核」。
+
+## 文件清单
+
+```
+grad-seminar-deck/
+├── SKILL.md                       # 本文件：流程与硬约束
+├── references/
+│   ├── content-paper.md           # 论文：逐页内容清单 + 汇总表 + 等级核实
+│   ├── content-experiment.md      # 实验：逐页内容清单 + 结果呈现规范
+│   ├── content-project.md         # 项目：科研项目 / 委托外包项目 的逐页清单与对账口径
+│   ├── deck-schema.md             # deck.json 全字段 + 版式参数
+│   ├── figure-capture.md          # 截图表：候选框/裁切/完整性判据
+│   └── self-check.md              # 四关自检清单 + 交付清单
+├── scripts/
+│   ├── build_deck.py              # 生成 pptx（结构展开、自动分区、字号自适应）
+│   ├── check_structure.py         # 内容完整性 / 页数预算 / 汇总表
+│   ├── check_deck.py              # 版面体检（溢出/字号/遮挡/dpi）
+│   ├── crop_figure.py             # 裁图 + 边缘完整性判定 + 候选框
+│   ├── contact_sheet.py           # 截图审片图
+│   └── render_deck.ps1            # 导出 PNG 供目检
+└── assets/
+    └── deck.example.json          # 三类内容齐全的可运行样例
+```
