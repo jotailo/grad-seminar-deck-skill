@@ -79,10 +79,15 @@ KIND_ROMAN = {"paper": "01", "experiment": "02", "project": "03"}  # 分区页�
 
 BUDGET_MIN, BUDGET_MAX = 2, 4   # 每个 unit 的内容页数区间
 
+# 论文汇总表：列固定，行由各单元的 brief 自动生成（追加新论文时自动多一行）
+SUMMARY_COLS = ["文献标题", "出处", "发布时间", "一句话核心内容"]
+SUMMARY_WIDTHS = [0.34, 0.22, 0.12, 0.32]
+KIND_ORDER = ["paper", "experiment", "project"]   # 追加时的规范顺序，保证分区号与目录一致
+
 
 FONT_PATHS = [
-    (r"C://Windows//Fonts//msyh.ttc", "微软雅黑"),
-    (r"C://Windows//Fonts//msyhbd.ttc", "微软雅黑"),
+    (r"C:\Windows\Fonts\msyh.ttc", "微软雅黑"),
+    (r"C:\Windows\Fonts\msyhbd.ttc", "微软雅黑"),
     (r"C://Windows//Fonts//simhei.ttf", "黑体"),
     ("/System/Library/Fonts/PingFang.ttc", "PingFang SC"),
     ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", "Noto Sans CJK SC"),
@@ -846,6 +851,47 @@ BUILDERS = {
 
 
 # ---------------------------------------------------------------- 结构展开
+def unit_brief(unit: dict) -> dict:
+    """从单元里取汇总表要用的四个字段；标题缺省用单元名。"""
+    b = unit.get("brief") or {}
+    return {
+        "title": b.get("title") or unit.get("name", ""),
+        "source": b.get("source", ""),
+        "date": b.get("date", ""),
+        "gist": b.get("gist", ""),
+    }
+
+
+def brief_ready(units) -> bool:
+    """每篇都写了 brief（至少写出处）才自动出表，缺一条就交给人工，不猜。"""
+    return bool(units) and all(unit_brief(u)["source"] for u in units)
+
+
+def auto_summary_page(part: dict):
+    """论文类且 ≥2 篇时，按各单元 brief 自动生成文献汇总表。
+
+    手写过汇总表（roles 里有 summary_table）就尊重手写版，不覆盖。
+    这样「追加一篇」时表自动多一行，不用再回去手改表格。
+    """
+    units = part.get("units") or []
+    if part.get("kind") != "paper" or len(units) < 2 or not brief_ready(units):
+        return None
+    if any("summary_table" in (p.get("roles") or []) for p in part.get("pages") or []):
+        return None
+    rows = [[b["title"], b["source"], b["date"], b["gist"]]
+            for b in (unit_brief(u) for u in units)]
+    return {
+        "type": "table",
+        "roles": ["summary_table"],
+        "title": "文献汇总",
+        "kicker": "论文阅读汇报 · 索引",
+        "columns": list(SUMMARY_COLS),
+        "rows": rows,
+        "col_widths": list(SUMMARY_WIDTHS),
+        "caption": f"共 {len(rows)} 篇；本表由各单元的 brief 自动生成，改 brief 即改表。",
+    }
+
+
 def expand(deck: dict) -> list[dict]:
     """把 part/unit 三级结构摊平成带上下文的页面列表。"""
     plan: list[dict] = []
@@ -885,6 +931,7 @@ def expand(deck: dict) -> list[dict]:
             "page": {
                 "type": "part",
                 "kind": kind,
+                "roman": f"{pi:02d}",   # 按实际位置编号：追加/删减种类后不会和目录对不上
                 "title": part.get("title") or label,
                 "subtitle": part.get("subtitle"),
                 "items": part.get("items") or [
@@ -893,6 +940,10 @@ def expand(deck: dict) -> list[dict]:
             },
             "ctx": {"part": pi, "part_label": label},
         })
+        auto = auto_summary_page(part)
+        if auto:
+            plan.append({"kind": "content", "page": auto,
+                         "ctx": {"part": pi, "part_label": label, "part_page": True}})
         for page in part.get("pages") or []:
             plan.append({"kind": "content", "page": page,
                          "ctx": {"part": pi, "part_label": label, "part_page": True}})
@@ -956,6 +1007,7 @@ def main() -> int:
     ap.add_argument("-o", "--out", required=True, help="输出 .pptx 路径")
     ap.add_argument("--accent", help="覆盖强调色，如 1F6F5C")
     ap.add_argument("--skip-budget-check", action="store_true", help="允许单元页数越界（不推荐）")
+    ap.add_argument("--session", help="只生成标了该 session 的单元（如 2026-11-02）")
     args = ap.parse_args()
 
     spec = json.loads(Path(args.spec).read_text(encoding="utf-8"))
@@ -976,6 +1028,34 @@ def main() -> int:
         return 5
     for e in budget_errs:
         print(f"[warn] {e}")
+
+    # —— 只讲本次：按 session 挑单元（deck.json 里仍保留全部内容）
+    if args.session:
+        sel = args.session
+        kept, dropped, manual_tbl = [], 0, False
+        for part in spec.get("parts") or []:
+            units = part.get("units") or []
+            mine = [u for u in units if str(u.get("session", "")) == sel]
+            dropped += len(units) - len(mine)
+            if not mine:
+                continue
+            p2 = dict(part)
+            p2["units"] = mine
+            kept.append(p2)
+            if any("summary_table" in (pg.get("roles") or []) for pg in part.get("pages") or []):
+                manual_tbl = True
+        if not kept:
+            have = sorted({str(u.get("session")) for p in spec["parts"]
+                           for u in p.get("units") or [] if u.get("session")})
+            print(f"[error] 没有单元标了 session={sel}；现有：{have or '（一个都没有）'}",
+                  file=sys.stderr)
+            return 4
+        spec["parts"] = kept
+        print(f"[挑选] 只生成 session={sel} 的 {sum(len(p['units']) for p in kept)} 个单元，"
+              f"其余 {dropped} 个本次不讲（文件里仍保留）")
+        if manual_tbl:
+            print("[warn] 手写的文献汇总表会列出全部论文；想让表只含本次，"
+                  "改用各单元 brief 自动生成", file=sys.stderr)
 
     plan = expand(spec)
     slides = [p for p in plan if p["kind"] != "end"] + [p for p in plan if p["kind"] == "end"]

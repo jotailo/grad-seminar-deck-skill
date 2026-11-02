@@ -1,16 +1,18 @@
 # 研究生组会 PPT 技能（grad-seminar-deck）
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![Unit pages](https://img.shields.io/badge/unit%20pages-2--4-blue)
 ![Layouts](https://img.shields.io/badge/layouts-6-lightgrey)
 ![Render](https://img.shields.io/badge/render-PowerPoint%20required-orange?logo=microsoftpowerpoint)
 
-把一次组会要讲的东西，做成一份**能站起来讲、经得起追问**的 `.pptx`。覆盖三种汇报——论文阅读、实验报告、项目进展——一份 PPT 里可以只讲一类，也可以三类混排、自动分区。
+把组会要讲的东西，做成一份**能站起来讲、经得起追问**的 `.pptx`。覆盖三种汇报——论文阅读、实验报告、项目进展——一份 PPT 里可以只讲一类，也可以三类混排、自动分区。
+
+默认做法是**一篇一篇往同一份里追加**，而不是每篇单独做一份再合并；追加时编号、页码、目录、文献汇总表全自动重算，你说「这份完成了」就封存，下一份从空白重新开始。
 
 **30 秒看到成品**（前提：已装 Python 与 `python-pptx`；没装先看 [快速安装](#快速安装)）：
 
 ```text
-cd ~/.你的vibe coding工具/skills/grad-seminar-deck
+cd ~/.<你的工具配置目录>/skills/grad-seminar-deck
 pip install python-pptx pillow numpy lxml
 python scripts/build_deck.py assets/deck.example.json -o 样例.pptx
 ```
@@ -50,6 +52,24 @@ deck.json ──► check_structure.py ──► build_deck.py ──► check_d
 
 设计上有条硬规矩：**内容与样式分离**。你只写 `deck.json`（讲什么），版式、字号、分区、页码、页脚全部由 `build_deck.py` 决定（怎么排）。所以改内容永远不用碰样式，也不会出现「第 5 页字突然变小了」这种事。
 
+## 追加：一篇一篇攒成同一份
+
+默认不是「每篇做一个 PPT，最后再合并」，而是**维护一份不断变长的 PPT**。读完一篇论文、做完一组实验、项目有新进展，就往**当前这一份**里追加一个单元；分区号、页码、目录、文献汇总表全部按当下内容自动重算，你不必维护任何编号。
+
+| 你的状态 | 它做什么 |
+|---|---|
+| 发来新的一篇 / 一组 / 一个项目 | 追加进当前 `deck.json`，重新生成；**不新建第二个文件** |
+| 说「这份完成了 / 就到这里 / 讲完了 / 齐了」 | 整份封存归档到 `已结束/`；**此后新内容都进新的一份**，分区从 01、页码从 1 重新开始，不继承上一份任何内容、编号或进度 |
+| 没说完成，但目录里已有 `deck.json` | 那就是「当前这一份」，继续往里追加 |
+| 说「重做一份新的」 | 先问要不要封存旧的，再动手 |
+
+两条边界值得先说清：
+
+- **封存是移动，不是删除**。归档目录里会留 `_说明.md`（讲了几篇、共几页、哪天封的），原 `pptx`、`deck.json`、上一版备份一起搬过去。
+- **只有你说了结束才算结束**。它不会因为你换个话题、或者这周过完了，就自作主张封存。
+
+具体命令见[追加一篇（每读一篇就走一遍）](#追加一篇每读一篇就走一遍)。
+
 ## 快速安装
 
 **前置条件**
@@ -63,7 +83,6 @@ deck.json ──► check_structure.py ──► build_deck.py ──► check_d
 ```bash
 pip install python-pptx pillow numpy lxml
 ```
-
 → **效果**：装上生成 pptx、处理图片、算版面所需的四个库；已装过会显示 `Requirement already satisfied`，不会重复装。
 
 **验证环境**
@@ -71,19 +90,17 @@ pip install python-pptx pillow numpy lxml
 ```bash
 python -c "import pptx, PIL, numpy, lxml; print('依赖齐了')"
 ```
-
 → **效果**：四个库都能导入就打印「依赖齐了」；报 `ModuleNotFoundError` 说明缺库，先补装再往下走。
 
 **验证跑通**（就是开头那三条命令）
 
 ```bash
-cd ~/.你的vibe coding工具/skills/grad-seminar-deck
+cd ~/.<你的工具配置目录>/skills/grad-seminar-deck
 python scripts/build_deck.py assets/deck.example.json -o 样例.pptx
 ```
-
 → **效果**：生成一份 27 页的完整示范 PPT（2 篇论文 + 2 组实验 + 2 个项目），六种版式各有可对照的写法，直接对照着改成自己的内容最快。
 
-**装在哪**：`~/.你的vibe coding工具/skills/grad-seminar-deck/`。这是用户级技能目录，所有项目都能用，不用每个项目装一遍。
+**装在哪**：`~/.<你的工具配置目录>/skills/grad-seminar-deck/`。放进（你的vibe coding工具）的用户级技能目录，所有项目都能用，不用每个项目装一遍。下文命令里的 `<你的工具配置目录>` 记得换成你工具的实际目录名，否则 `cd` 会找不到路径。
 
 **👉 [SKILL.md](SKILL.md)** —— 给 AI 看的执行流程与硬约束（人不用细读，但想知道「它为什么老拦我」时可以翻）。
 
@@ -93,20 +110,20 @@ python scripts/build_deck.py assets/deck.example.json -o 样例.pptx
 
 **实测数据**（27 页样例，本机 Windows + 已装 PowerPoint，单次运行）：
 
-| 环节                 | 耗时  | 说明                                           |
-| -------------------- | ----- | ---------------------------------------------- |
-| `check_structure.py` | 0.3 s | 纯静态解析，几乎不耗时，可以随手多跑           |
-| `build_deck.py`      | 1.1 s | 27 页全部生成完毕                              |
-| `check_deck.py`      | 1.1 s | 逐页逐形状量文字高度                           |
-| `render_deck.ps1`    | 5.8 s | 27 页导出 PNG，约 0.2 s/页；冷启动第一次会慢些 |
+| 环节 | 耗时 | 说明 |
+|---|---|---|
+| `check_structure.py` | 0.3 s | 纯静态解析，几乎不耗时，可以随手多跑 |
+| `build_deck.py` | 1.1 s | 27 页全部生成完毕 |
+| `check_deck.py` | 1.1 s | 逐页逐形状量文字高度 |
+| `render_deck.ps1` | 5.8 s | 27 页导出 PNG，约 0.2 s/页；冷启动第一次会慢些 |
 
 **页数预算**：每个单元 2–4 页，这是硬约束。样例的 27 页 = 21 页内容 + 6 页自动生成（封面 1 + 目录 1 + 分区页 3 + 结束页 1）。反推一下就知道一场组会能讲多少：
 
-| 你要讲                         | 内容页 | 加自动页后 | 大概时长   |
-| ------------------------------ | ------ | ---------- | ---------- |
-| 1 篇论文（精简 2 页）          | 2      | 6          | 5–8 分钟   |
-| 1 篇论文（完整 4 页）          | 4      | 8          | 10–12 分钟 |
-| 2 篇论文 + 2 组实验 + 2 个项目 | 21     | 27         | 25–30 分钟 |
+| 你要讲 | 内容页 | 加自动页后 | 大概时长 |
+|---|---|---|---|
+| 1 篇论文（精简 2 页） | 2 | 6 | 5–8 分钟 |
+| 1 篇论文（完整 4 页） | 4 | 8 | 10–12 分钟 |
+| 2 篇论文 + 2 组实验 + 2 个项目 | 21 | 27 | 25–30 分钟 |
 
 > 上表前三列是算出来的，最后一列是**按每页 40–70 秒估的**，不是实测——讲多快因人而异。
 
@@ -126,7 +143,7 @@ python scripts/build_deck.py assets/deck.example.json -o 样例.pptx
 - **`takeaway` 强制你写「所以呢」** —— 每页可写一句 45 字以内的结论条，压在页脚上方。写不出来，说明这一页还没想清。
 - **`source` 落在页脚** —— 写 `原文 p.5 Table 1` 这种可回溯的出处，被追问时能直接翻回去。
 
-**它不做的事**：不改你已有的 PPT（那用 `pptx`）；不写论文、不投稿、不审稿；不替你编数据——原文没有的图，它只会要求你写清「图片不可得」，不许自己画一张冒充。
+**它不做的事**：不改你已有的 PPT（那用 PPT 技能）；不写论文、不投稿、不审稿；不替你编数据——原文没有的图，它只会要求你写清「图片不可得」，不许自己画一张冒充。
 
 ### 什么时候用，什么时候别用
 
@@ -141,7 +158,7 @@ python scripts/build_deck.py assets/deck.example.json -o 样例.pptx
 「/grad-seminar-deck」                      → 显式触发
 ```
 
-**别用**：只要一篇论文的精读笔记（写 Markdown 更快）；只想改已有 PPT 的某一页（用 `pptx`）；写论文或审稿（不是这个技能的事）。
+**别用**：只要一篇论文的精读笔记（写 Markdown 更快）；只想改已有 PPT 的某一页（用 PPT 技能）；写论文或审稿（不是这个技能的事）。
 
 ---
 
@@ -150,35 +167,34 @@ python scripts/build_deck.py assets/deck.example.json -o 样例.pptx
 样例是**可运行的输出**，不是截图。跑一遍就能看到 27 页成品：
 
 ```bash
-cd ~/.你的vibe coding工具/skills/grad-seminar-deck
+cd ~/.<你的工具配置目录>/skills/grad-seminar-deck
 python scripts/build_deck.py assets/deck.example.json -o 样例.pptx
 ```
-
 → **效果**：生成 `样例.pptx`（27 页 / 约 240 KB），三类汇报、六种版式全部覆盖。
 
 > **这是版式示范，不是内容示范。** 样例里的图是程序画的**占位图**（假数据 + 右下角红字「示例占位图」），项目编号 `6220XXXX`、委托方「XX 市水务集团」都是编的。正式使用时全部替换成原文截图与你自己的项目信息，不要沿用。
 
-| 产物                                                         | 说明                                                         |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [assets/deck.example.json](assets/deck.example.json)         | 27 页对应的完整 `deck.json`——最值得抄的一份文件              |
-| [assets/figs/](assets/figs/)                                 | 6 张占位图，展示「框架图 / 消融柱状图 / 任务书节点条 / 合同里程碑」四种证据图各自的版式位置 |
-| [references/content-paper.md](references/content-paper.md)   | 论文类逐页内容清单、汇总表写法、期刊等级核实口径             |
-| [references/content-experiment.md](references/content-experiment.md) | 实验类逐页内容清单、结果呈现方式                             |
-| [references/content-project.md](references/content-project.md) | 科研项目 / 委托项目两种对账口径                              |
-| [references/figure-capture.md](references/figure-capture.md) | 截图表三步法、完整性判据、常见裁错案例                       |
-| [references/self-check.md](references/self-check.md)         | 四关自检清单（可逐条打勾）                                   |
+| 产物 | 说明 |
+|---|---|
+| [assets/deck.example.json](assets/deck.example.json) | 27 页对应的完整 `deck.json`——最值得抄的一份文件 |
+| [assets/figs/](assets/figs/) | 6 张占位图，展示「框架图 / 消融柱状图 / 任务书节点条 / 合同里程碑」四种证据图各自的版式位置 |
+| [references/content-paper.md](references/content-paper.md) | 论文类逐页内容清单、汇总表写法、期刊等级核实口径 |
+| [references/content-experiment.md](references/content-experiment.md) | 实验类逐页内容清单、结果呈现方式 |
+| [references/content-project.md](references/content-project.md) | 科研项目 / 委托项目两种对账口径 |
+| [references/figure-capture.md](references/figure-capture.md) | 截图表三步法、完整性判据、常见裁错案例 |
+| [references/self-check.md](references/self-check.md) | 四关自检清单（可逐条打勾） |
 
 ## 配合使用的技能
 
 组会 PPT 只是链条中间的一环，前后各有搭子：
 
 ```text
-	pdf-tool          ──►  本技能  ──►            pptx-tool
-（PDF 逐页渲染成 PNG）         （从零生成）     （改已有 PPT 的某一页）
+PDF 技能  ──►  本技能  ──►  PPT 技能
+逐页渲染成 PNG 从零生成     改已有 PPT 的某一页
 ```
 
-- **前面接 `pdf-tool`** —— 截图表前先把 PDF 逐页渲染成 PNG（`page-0001.png`…），这是裁图的底图。命令见[脚本与命令明细](#脚本与命令明细)末尾。
-- **后面接 `pptx-tool`** —— 成品生成后如果要在 PowerPoint 里手改某一页、或者要基于别人的旧 PPT 改，用那个技能；本技能假定从零生成。
+- **前面接 PDF 技能** —— 截图表前先把 PDF 逐页渲染成 PNG（`page-0001.png`…），这是裁图的底图。命令见[脚本与命令明细](#脚本与命令明细)末尾。
+- **后面接 PPT 技能** —— 成品生成后如果要在 PowerPoint 里手改某一页、或者要基于别人的旧 PPT 改，用那个技能；本技能假定从零生成。
 - **不要在两边来回改** —— 手改会被下次重新生成覆盖，原因见[六个实用技巧](#六个实用技巧)第 6 条。
 
 ---
@@ -198,6 +214,42 @@ python scripts/build_deck.py assets/deck.example.json -o 样例.pptx
 
 做完你会拿到四样东西：`deck.json`（内容源文件）、`.pptx`（成品）、渲染出的逐页 PNG（供你目检）、以及一份体检结论（哪几页有问题、什么问题）。
 
+### 追加一篇（每读一篇就走一遍）
+
+这是**日常主用法**：同一份 PPT 一直长，不新开文件。
+
+```bash
+ls deck.json 2>/dev/null || echo "没有当前这一份"
+```
+→ **效果**：看看这一份还在不在做。打出文件名说明还没结束，继续往里追加；打出「没有当前这一份」说明上次已封存或还没开始，下次追加会自动新建空白 deck（编号从 01、页码从 1）。
+
+把这一篇写成片段 `新论文.json`（只放一个单元，格式见[片段格式](#片段格式append-用的最小单位)），然后：
+
+```bash
+python "$SKILL/scripts/append_unit.py" deck.json 新论文.json --session 2026-11-02
+```
+→ **效果**：这一篇追加进当前这一份，整份重算分区号、页码、目录、汇总表，自动生成 pptx，并顺手跑完内容检查与版面体检。**检查不过时 `deck.json` 不被改动**，原文件保持原样。
+
+只想讲这次新加的、不把以前的也过一遍：
+
+```bash
+python "$SKILL/scripts/build_deck.py" deck.json -o 本周.pptx --session 2026-11-02
+```
+→ **效果**：只生成打了该标签的单元，编号从 01 重排；文件里其余内容原样保留，不加 `--session` 就是全量。
+
+这份到此为止：
+
+```bash
+python "$SKILL/scripts/finish_deck.py" deck.json
+```
+→ **效果**：整份移动到 `已结束/2026-11-02_<标题>/`（含 `_说明.md`、pptx、deck.json、上一版备份），当前目录不再有 `deck.json`；下次追加自动从空白开始。
+
+三条规矩，都是为了不给自己挖坑：
+
+- **同一篇别追加两次**——按同名拦截；真要放重读版就改标题加「（重读）」，或加 `--allow-dup`。
+- **页数不合规不给追加**——脚本在写文件前就拦下（必须 2–4 页）。
+- **别手改生成好的 pptx**——每次追加都重新生成，手改的会被覆盖。要改就改片段或 `deck.json` 再跑一遍。
+
 ### 手动跑（不想让 AI 代劳时）
 
 按顺序走完下面几条命令即可。先建工作目录，把截好的图放进 `figs/`：
@@ -205,7 +257,6 @@ python scripts/build_deck.py assets/deck.example.json -o 样例.pptx
 ```bash
 mkdir -p ~/deck_demo/figs
 ```
-
 → **效果**：建出 `deck_demo/` 及子目录 `figs/`，图片放 `figs/`，deck.json 和产物放 `deck_demo/` 根下——中间产物集中一处，下周改的时候不用到处找。
 
 第一次练手可以先用任意一张 PNG 占位（命名成 `figs/f1.png`），跑通流程再换真图——不要把「还没截图」当成不能开工的理由。
@@ -214,33 +265,28 @@ mkdir -p ~/deck_demo/figs
 
 ```bash
 cd ~/deck_demo
-SKILL=~/.你的vibe coding工具/skills/grad-seminar-deck
+SKILL=~/.<你的工具配置目录>/skills/grad-seminar-deck
 ```
-
 → **效果**：进入工作目录；`SKILL` 记下技能所在位置，后面命令直接复用，不用每次打一长串路径（换新终端要重新设一次）。
 
 ```bash
 python "$SKILL/scripts/check_structure.py" deck.json
 ```
-
 → **效果**：检查「讲全了没有」——9 个内容点齐不齐、页数是否在 2–4 页、有没有证据图。打印每个单元一行 `[OK]`；有问题打 `[FAIL]` 并指出缺哪个内容点，退出码非 0。
 
 ```bash
 python "$SKILL/scripts/build_deck.py" deck.json -o 组会汇报.pptx
 ```
-
 → **效果**：生成 `组会汇报.pptx`，自动补封面、目录、分区页、页码、页脚；顺带报出「偏密 / 孤字 / 内容过稀」这类提醒。
 
 ```bash
 python "$SKILL/scripts/check_deck.py" 组会汇报.pptx
 ```
-
 → **效果**：静态体检——文字有没有溢出边框、字号是不是太小、元素有没有跑出页面、图被文字压没压住、插图 dpi 够不够、有没有空页。最后一行给「结论：通过」或列出需修的页号。
 
 ```bash
 powershell -NoProfile -ExecutionPolicy Bypass -File "$SKILL/scripts/render_deck.ps1" -Pptx "组会汇报.pptx"
 ```
-
 → **效果**：调用本机 PowerPoint 逐页导出 PNG 到 `render/`，每页一张；没有 PowerPoint 会明确报错，而不是静默跳过。
 
 然后**逐张看**：有没有字被压住、图注是否完整、字够不够大、有没有半页空白。机器查不出「不好看」，这一步不能省。
@@ -310,12 +356,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$SKILL/scripts/render_deck.
 
 **这里的「项目」只指有立项或合同的活**，两类，写法不同：
 
-|                | A 科研项目                                         | B 委托 / 外包项目                                    |
-| -------------- | -------------------------------------------------- | ---------------------------------------------------- |
-| 典型来源       | 国自然/省基金、重点研发子课题、横向课题            | 老师接的企业、事业单位开发或算法委托                 |
-| 名称要写全     | 项目类别 + 项目名 + 编号 + 起止年 + 我的角色       | 委托方 + 项目名 + 合同期 + 我的角色                  |
-| 进度拿什么对账 | 任务书节点、结题指标（论文/专利/数据集）           | 合同里程碑、交付物（原型/接口/试运行/验收）          |
-| 卡点长什么样   | 标注跟不上、算力不够、方法不收敛、合作单位数据未到 | 甲方权限没开、需求变更、验收标准分歧、现场机器跑不动 |
+| | A 科研项目 | B 委托 / 外包项目 |
+|---|---|---|
+| 典型来源 | 国自然/省基金、重点研发子课题、横向课题 | 老师接的企业、事业单位开发或算法委托 |
+| 名称要写全 | 项目类别 + 项目名 + 编号 + 起止年 + 我的角色 | 委托方 + 项目名 + 合同期 + 我的角色 |
+| 进度拿什么对账 | 任务书节点、结题指标（论文/专利/数据集） | 合同里程碑、交付物（原型/接口/试运行/验收） |
+| 卡点长什么样 | 标注跟不上、算力不够、方法不收敛、合作单位数据未到 | 甲方权限没开、需求变更、验收标准分歧、现场机器跑不动 |
 
 两条硬规矩：
 
@@ -338,6 +384,32 @@ deck.json
 ```
 
 封面、目录、分区页、页码、页脚都是自动生成的，你只写内容页。
+
+### 片段格式（append 用的最小单位）
+
+追加时不用碰整份文件，只写**这一个单元**。两种写法都收，效果一样：
+
+```json
+{
+  "kind": "paper",
+  "unit": {
+    "name": "ReAct：推理与行动的交替",
+    "brief": { "source": "ICLR 2023（CCF-A）", "date": "2022-10", "gist": "让检索回到推理链里，思考与行动交替推进。" },
+    "pages": [ "…… 2–4 页，字段与下面最小示例完全一致 ……" ]
+  }
+}
+```
+
+也可以把 `unit` 摊平写到顶层（`{"kind": "paper", "name": "...", "pages": [...]}`）。
+
+`brief` 是**文献汇总表那一行**：`source` 出处、`date` 发布时间、`gist` 一句话核心内容，标题默认取 `name`。写了它，汇总表就按各篇自动长行，不必回去手改表格；没写则要手写一页 `roles: ["summary_table"]` 的表。
+
+跑一遍随包的片段样例（图会自动按片段所在目录找）：
+
+```bash
+python "$SKILL/scripts/append_unit.py" 组会汇报.json "$SKILL/assets/paper.fragment.example.json"
+```
+→ **效果**：以这一篇为起点新建一份 deck 并生成 pptx，是最快的「先看跑通」方式。
 
 ### 最小可运行示例（一篇论文 3 页）
 
@@ -406,27 +478,27 @@ deck.json
 
 ### 每页通用字段
 
-| 字段             | 作用                                                     |
-| ---------------- | -------------------------------------------------------- |
-| `type`           | 版式，见下表；不写默认 `bullets`                         |
-| `roles`          | 内容点标签，**检查脚本靠它核对**，一页可登记多个         |
-| `title`          | 页标题，写成判断句，≤30 字                               |
-| `takeaway`       | 页脚上方结论条，≤45 字，「这一页到底说明什么」           |
-| `source`         | 出处，渲染进页脚（`原文 p.5 Table 1`），被追问时能翻回去 |
-| `notes`          | 演讲备注，写进备注栏不显示在页面上                       |
-| `evidence`       | `true` 标记这是证据页，供检查统计                        |
-| `kicker` / `sub` | 标题上方小标签 / 标题下一句补充，一般不写（自动生成）    |
+| 字段 | 作用 |
+|---|---|
+| `type` | 版式，见下表；不写默认 `bullets` |
+| `roles` | 内容点标签，**检查脚本靠它核对**，一页可登记多个 |
+| `title` | 页标题，写成判断句，≤30 字 |
+| `takeaway` | 页脚上方结论条，≤45 字，「这一页到底说明什么」 |
+| `source` | 出处，渲染进页脚（`原文 p.5 Table 1`），被追问时能翻回去 |
+| `notes` | 演讲备注，写进备注栏不显示在页面上 |
+| `evidence` | `true` 标记这是证据页，供检查统计 |
+| `kicker` / `sub` | 标题上方小标签 / 标题下一句补充，一般不写（自动生成） |
 
 ### 六种版式，别自己发明
 
-| `type`      | 用来表达                                     | 关键字段                                                   |
-| ----------- | -------------------------------------------- | ---------------------------------------------------------- |
-| `bullets`   | 有先后的要点、观点、问题、计划（一级 ≤6 条） | `bullets`（字符串，或 `{text, level, bold}`）              |
-| `image`     | 原文/结果图作证据，左图右文                  | `image`（必填）、`caption`、`image_ratio`、`image_side`    |
-| `table`     | 对照关系：实验↔观点、指标对比                | `columns`、`rows`、`col_widths`（和为 1）、`highlight_col` |
-| `cards`     | 并列事实：标题、出处、目的、设置             | `entries: [{label, value, strong}]`、`cols`                |
-| `columns`   | 2–4 栏并列：进度/问题/下一步、局限/后续/结论 | `columns: [{heading, bullets}]`                            |
-| `statement` | 一句必须让全场记住的话                       | `text`、`attribution`                                      |
+| `type` | 用来表达 | 关键字段 |
+|---|---|---|
+| `bullets` | 有先后的要点、观点、问题、计划（一级 ≤6 条） | `bullets`（字符串，或 `{text, level, bold}`） |
+| `image` | 原文/结果图作证据，左图右文 | `image`（必填）、`caption`、`image_ratio`、`image_side` |
+| `table` | 对照关系：实验↔观点、指标对比 | `columns`、`rows`、`col_widths`（和为 1）、`highlight_col` |
+| `cards` | 并列事实：标题、出处、目的、设置 | `entries: [{label, value, strong}]`、`cols` |
+| `columns` | 2–4 栏并列：进度/问题/下一步、局限/后续/结论 | `columns: [{heading, bullets}]` |
+| `statement` | 一句必须让全场记住的话 | `text`、`attribution` |
 
 `cover` / `end` / `agenda` 不用手写，自动生成。
 
@@ -444,55 +516,55 @@ deck.json
 
 ## 脚本与命令明细
 
-六个脚本，八条常用命令。**每条命令都在这一节，其它地方只是引用。**
+八个脚本，十条常用命令。**每条命令都在这一节，其它地方只是引用。**
 
-| 脚本                 | 什么时候用            | 命令                                                         | 效果                                                         |
-| -------------------- | --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| `check_structure.py` | 写完 deck.json 立刻跑 | `python "$SKILL/scripts/check_structure.py" deck.json`       | 查内容点、页数预算、汇总表行数、证据图；`[FAIL]` 清零才能继续 |
-| `build_deck.py`      | 结构过关后            | `python "$SKILL/scripts/build_deck.py" deck.json -o 组会汇报.pptx` | 生成 pptx，自动分区与页码；页数越界报错退出，偏密/孤字/过稀给提醒 |
-| `check_deck.py`      | 生成后立刻跑          | `python "$SKILL/scripts/check_deck.py" 组会汇报.pptx`        | 查溢出、字号、遮挡、越界、dpi、空页；零 FAIL 才算过          |
-| `crop_figure.py`     | 截原文图表时          | `python "$SKILL/scripts/crop_figure.py" --page pages/page-0005.png --propose` | 打印这一页的内容块候选框（相对比例），挑出目标图表那一行     |
-| `crop_figure.py`     | 有了坐标要裁          | `python "$SKILL/scripts/crop_figure.py" --page pages/page-0005.png --bbox 0.06,0.10,0.48,0.36 --out figs/p1_f1.png` | 按框裁图并判定四条边有没有墨迹跨过边界：`[OK]` 才完整，`[FAIL]` 会给出建议坐标 |
-| `crop_figure.py`     | 已有图要复核          | `python "$SKILL/scripts/crop_figure.py" --check figs/p1_f1.png` | 单张图完整性体检 + 有效 dpi                                  |
-| `contact_sheet.py`   | 截完一批图            | `python "$SKILL/scripts/contact_sheet.py" figs/*.png -o figs/_sheet.png` | 拼成一张审片图，被切的那张会红框标 `EDGE`，一眼挑出来        |
-| `render_deck.ps1`    | 生成后目检            | `powershell -NoProfile -ExecutionPolicy Bypass -File "$SKILL/scripts/render_deck.ps1" -Pptx "组会汇报.pptx"` | 逐页导出 PNG 到 `render/`，供人工看图                        |
+| 脚本 | 什么时候用 | 命令 | 效果 |
+|---|---|---|---|
+| `append_unit.py` | **每读完一篇就追加**（主用法） | `python "$SKILL/scripts/append_unit.py" deck.json 新论文.json --session 2026-11-02` | 追加进当前这一份并重建；检查不过则 `deck.json` 不动。deck 不存在时按空白新建 |
+| `finish_deck.py` | 用户说「这份完成了」 | `python "$SKILL/scripts/finish_deck.py" deck.json` | 移动到 `已结束/<日期>_<标题>/` 并写 `_说明.md`；下一份从空白重新编号 |
+| `check_structure.py` | 写完 deck.json 立刻跑 | `python "$SKILL/scripts/check_structure.py" deck.json` | 查内容点、页数预算、汇总表行数、证据图；`[FAIL]` 清零才能继续 |
+| `build_deck.py` | 结构过关后 | `python "$SKILL/scripts/build_deck.py" deck.json -o 组会汇报.pptx` | 生成 pptx，自动分区与页码；页数越界报错退出，偏密/孤字/过稀给提醒 |
+| `check_deck.py` | 生成后立刻跑 | `python "$SKILL/scripts/check_deck.py" 组会汇报.pptx` | 查溢出、字号、遮挡、越界、dpi、空页；零 FAIL 才算过 |
+| `crop_figure.py` | 截原文图表时 | `python "$SKILL/scripts/crop_figure.py" --page pages/page-0005.png --propose` | 打印这一页的内容块候选框（相对比例），挑出目标图表那一行 |
+| `crop_figure.py` | 有了坐标要裁 | `python "$SKILL/scripts/crop_figure.py" --page pages/page-0005.png --bbox 0.06,0.10,0.48,0.36 --out figs/p1_f1.png` | 按框裁图并判定四条边有没有墨迹跨过边界：`[OK]` 才完整，`[FAIL]` 会给出建议坐标 |
+| `crop_figure.py` | 已有图要复核 | `python "$SKILL/scripts/crop_figure.py" --check figs/p1_f1.png` | 单张图完整性体检 + 有效 dpi |
+| `contact_sheet.py` | 截完一批图 | `python "$SKILL/scripts/contact_sheet.py" figs/*.png -o figs/_sheet.png` | 拼成一张审片图，被切的那张会红框标 `EDGE`，一眼挑出来 |
+| `render_deck.ps1` | 生成后目检 | `powershell -NoProfile -ExecutionPolicy Bypass -File "$SKILL/scripts/render_deck.ps1" -Pptx "组会汇报.pptx"` | 逐页导出 PNG 到 `render/`，供人工看图 |
 
 `build_deck.py` 另一个常用参数：
 
 ```bash
 python "$SKILL/scripts/build_deck.py" deck.json -o 组会汇报.pptx --accent 1F6F5C
 ```
-
 → **效果**：整体换成另一套强调色（这里是墨绿），全篇统一生效，不用逐页改。
 
-> `pages/page-0005.png` 这种整页图从哪来：把 PDF 逐页渲染成 PNG（图表小字多时用 400dpi）。装了 `pdf-tool` 技能的话一行就够：
+> `pages/page-0005.png` 这种整页图从哪来：把 PDF 逐页渲染成 PNG（图表小字多时用 400dpi）。装了 PDF 技能的话一行就够：
 >
 > ```bash
-> sh "<pdf-tool 技能目录>/scripts/run.sh" "/abs/paper.pdf" "$HOME/deck_demo/pages" -f png --dpi 300
+> sh "<PDF 技能目录>/scripts/run.sh" "/abs/paper.pdf" "$HOME/deck_demo/pages" -f png --dpi 300
 > ```
->
 > → **效果**：PDF 每一页导出一张 `page-0001.png`、`page-0002.png`……，作为裁图的底图。**不要**用 `--image-dir` 直接抽图——它按识别结果裁，边缘不保证完整。
 
 ## 设计系统
 
 固定好的，**不要逐页改字号和颜色**。
 
-| 项     | 值                                               |
-| ------ | ------------------------------------------------ |
-| 页面   | 16:9，13.33 × 7.50 英寸，白底                    |
-| 强调色 | `#2F5597`（可用 `--accent` 全篇换色）            |
-| 正文   | 18pt 起，按版面在 14–22pt 之间自动调             |
-| 页脚   | 10.5pt；任何文字不低于 10pt                      |
-| 装饰   | 无渐变、无阴影、无剪贴画、无 emoji；只用细线分隔 |
+| 项 | 值 |
+|---|---|
+| 页面 | 16:9，13.33 × 7.50 英寸，白底 |
+| 强调色 | `#2F5597`（可用 `--accent` 全篇换色） |
+| 正文 | 18pt 起，按版面在 14–22pt 之间自动调 |
+| 页脚 | 10.5pt；任何文字不低于 10pt |
+| 装饰 | 无渐变、无阴影、无剪贴画、无 emoji；只用细线分隔 |
 
 ## 交付前的四关
 
-| 关       | 谁查                 | 过线标准                                                     |
-| -------- | -------------------- | ------------------------------------------------------------ |
-| 1 结构关 | `check_structure.py` | 零 FAIL：内容点齐、每单元 2–4 页、汇总表对得上               |
-| 2 版面关 | `check_deck.py`      | 零 FAIL：无溢出、无过小字号、无遮挡、dpi ≥150                |
-| 3 目检关 | 人看渲染图           | 遮挡、图注、字号、空页、对齐——机器查不出「不好看」           |
-| 4 事实关 | 人对着原文           | 每个数字、作者名、期刊等级、结论方向都能翻回原处；对不上的删掉或标「待核」 |
+| 关 | 谁查 | 过线标准 |
+|---|---|---|
+| 1 结构关 | `check_structure.py` | 零 FAIL：内容点齐、每单元 2–4 页、汇总表对得上 |
+| 2 版面关 | `check_deck.py` | 零 FAIL：无溢出、无过小字号、无遮挡、dpi ≥150 |
+| 3 目检关 | 人看渲染图 | 遮挡、图注、字号、空页、对齐——机器查不出「不好看」 |
+| 4 事实关 | 人对着原文 | 每个数字、作者名、期刊等级、结论方向都能翻回原处；对不上的删掉或标「待核」 |
 
 ---
 
@@ -536,16 +608,16 @@ python "$SKILL/scripts/build_deck.py" deck.json -o 组会汇报.pptx --accent 1F
 
 ## 报错对照表
 
-| 看到什么                   | 意思                            | 怎么办                                          |
-| -------------------------- | ------------------------------- | ----------------------------------------------- |
-| 退出码 **5**，单元页数越界 | 某篇/某组/某项目不是 2–4 页     | 合并或拆分内容页                                |
-| 退出码 **3**，图片不存在   | `image` 路径写错或图还没裁      | 先按第六节裁图，再改路径                        |
-| 退出码 **2**，未知版式     | `type` 用了表里没有的值         | 只能用六种版式之一                              |
-| `[FAIL] 缺内容点：…`       | 该登记的内容点没登记            | 在对应页的 `roles` 里加上，或确实没内容就补内容 |
-| `[warn] 表格偏密`          | 行太多/字太多，最小字号也塞不下 | 精简单元格文字或拆成两页                        |
-| `[hint] 末行只剩一两个字`  | 孤字，投出来难看                | 改写措辞，增减几个字让断行位置变掉              |
-| `[warn] 内容偏少`          | 一页只占版面不到一半            | 补一条具体结果，或与相邻页合并                  |
-| `[FAIL] 插图 dpi 不足`     | 图是从网页/低分辨率截图来的     | 用 300–400dpi 重新渲染原文页面再裁              |
+| 看到什么 | 意思 | 怎么办 |
+|---|---|---|
+| 退出码 **5**，单元页数越界 | 某篇/某组/某项目不是 2–4 页 | 合并或拆分内容页 |
+| 退出码 **3**，图片不存在 | `image` 路径写错或图还没裁 | 先按第六节裁图，再改路径 |
+| 退出码 **2**，未知版式 | `type` 用了表里没有的值 | 只能用六种版式之一 |
+| `[FAIL] 缺内容点：…` | 该登记的内容点没登记 | 在对应页的 `roles` 里加上，或确实没内容就补内容 |
+| `[warn] 表格偏密` | 行太多/字太多，最小字号也塞不下 | 精简单元格文字或拆成两页 |
+| `[hint] 末行只剩一两个字` | 孤字，投出来难看 | 改写措辞，增减几个字让断行位置变掉 |
+| `[warn] 内容偏少` | 一页只占版面不到一半 | 补一条具体结果，或与相邻页合并 |
+| `[FAIL] 插图 dpi 不足` | 图是从网页/低分辨率截图来的 | 用 300–400dpi 重新渲染原文页面再裁 |
 
 ## 六个实用技巧
 
@@ -580,9 +652,10 @@ grad-seminar-deck/
 │   ├── deck-schema.md             # deck.json 全字段速查
 │   ├── figure-capture.md          # 截图表：候选框、裁切、完整性判据
 │   └── self-check.md              # 四关自检清单
-├── scripts/                       # 六个脚本（见「脚本与命令明细」）
+├── scripts/                       # 八个脚本（见「脚本与命令明细」）
 └── assets/
     ├── deck.example.json          # 三类内容齐全的完整样例（27 页）
+    ├── paper.fragment.example.json # 追加用片段样例（一篇论文，可直接跑）
     └── figs/                      # 样例配的占位图，右下角红字标了「示例占位图」
 ```
 
@@ -606,12 +679,39 @@ grad-seminar-deck/
 **Q：能直接改生成的 pptx 吗？**
 能，但改完就「脱轨」了：之后再从 deck.json 重新生成，手改会被覆盖。所以改内容回到 deck.json，PowerPoint 里只做最后的微调并另存。
 
+**Q：我不想每篇都攒进同一份，就想每篇单独一份，行吗？**
+行，这是旧写法：每次换一个目录、换一个 `deck.json`，就是独立的一份（`append_unit.py` 发现目录里没有 deck.json 就会新建）。但要注意两份之间不会共享编码与样式以外的任何东西——各份的分区号都从 01 开始，这是设计如此。
+
+**Q：攒到 12 篇，PPT 变成 50 页怎么办？**
+两种用法：一是全量（`build_deck.py` 不加参数），适合「一次过一遍全部读过的东西」；二是只讲本次（加 `--session 2026-11-02`），只出这次新加的几页，编号还从 01 重排。内容始终只在 `deck.json` 里存一份。
+
+**Q：封存之后反悔了，想把旧的接着讲？**
+`已结束/<日期>_<标题>/` 里的 `deck.json` 是完整的源文件，拷回工作目录、改个名就能继续用。封存只是搬家，没有删除任何东西。
+
+**Q：追加时提示「单元名重复」，但我确实要放两次？**
+改标题（如加「（重读）」「（v2 版）」）最省事；或者加 `--allow-dup` 强行放行——不过同一篇在 PPT 里出现两次，讲的时候容易被问「这两页有什么区别」。
+
 ## 维护与更新记录
 
-- 版本：`1.0.0`（与 `SKILL.md` frontmatter 同步改）
-- 安装位置：`~/.你的vibe coding工具/skills/grad-seminar-deck/`（用户级，所有项目可用）
-- 改脚本后自测顺序：跑 `assets/deck.example.json` 全套三关 → 渲染目检 → 再打包
+- 版本：`1.1.0`（与 `SKILL.md` frontmatter 同步改）
+- 安装位置：`~/.<你的工具配置目录>/skills/grad-seminar-deck/`（用户级，所有项目可用）
+- 改脚本后自测顺序：跑 `assets/deck.example.json` 全套三关 → 再跑一遍「空白 → 追加两篇 → 追加实验/项目 → 封存 → 重开」的追加链路 → 渲染目检 → 再打包
 - 打包命令输出到 `dist/grad-seminar-deck.zip`，改完记得重新打包，否则分发出去的还是旧版
+- **打包别把输出目录放在技能目录里**：打包脚本边遍历边写包，输出到技能目录内的 `dist/` 时会把自己刚生成的 zip 收进包里，越滚越大直到进程被杀。做法是先输出到技能目录外的临时目录，再把 zip 移进 `dist/`
+
+### 1.1.0（2026-11-02）
+
+改的是**用法**，不是版式：从「一次做一份」变成「一篇一篇攒成同一份」。
+
+- 新增 `append_unit.py`：把一个单元追加进当前 `deck.json` 并重建；在写文件之前先跑内容检查，不过就不动原文件。`.bak.json` 留上一版。
+- 新增 `finish_deck.py`：封存当前这一份（移动到 `已结束/`，附 `_说明.md`），下一份自动从空白开始。
+- 文献汇总表改为**自动生成**：每篇写 `brief {source, date, gist}`，追加一篇自动长一行；手写过 `summary_table` 页则尊重手写版。
+- 分区大号数字改为按**实际位置**编号，追加/删减种类后不会和目录对不上（此前是写死 `paper=01`）。
+- 新增 `--session`：只生成打过该标签的单元，用来「只讲本周新加的那几篇」，文件里内容不删。
+- 新增 `added`（加入日期）、`session`（场次标签）两个可选字段；`brief` 缺字段、单元重名会给提醒。
+- `append_unit.py` 会把片段旁的相对图片路径改成绝对路径，避免「片段放在别的目录就报图片不存在」。
+
+验收：从空白开始连续追加（2 篇论文 + 1 组实验 + 1 个项目）→ 19 页，分区号 01/02/03 与目录一致，汇总表自动 2 行；重复追加被拦（退出码 6）；按 `--session` 单独生成 7 页；封存后重开从 01、第 1 页开始。
 
 ### 1.0.0（2026-10-31）
 

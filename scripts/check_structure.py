@@ -118,7 +118,16 @@ def check(spec: dict):
         if kind == "paper" and (len(units) > 1 or any(p.get("require_summary") for p in part_pages)):
             tbls = [p for p in part_pages if "summary_table" in roles_of(p)]
             if not tbls:
-                fails.append(f"{label}：缺文献汇总表（放一个 part 级 table 页，roles 写 [\"summary_table\"]）")
+                # 没手写表：只要每篇都写了 brief，生成时会自动出表
+                missing = [u.get("name", "")[:16] or f"第{i}篇"
+                           for i, u in enumerate(units, 1)
+                           if not (u.get("brief") or {}).get("source")]
+                if missing:
+                    fails.append(f"{label}：缺文献汇总表——要么放一个 part 级 table 页"
+                                 f"（roles 写 [\"summary_table\"]），要么给每篇补 brief"
+                                 f"（这几篇还没写 brief.source：{missing}）")
+                else:
+                    oks.append(f"{label}：文献汇总表由 {len(units)} 篇的 brief 自动生成")
             else:
                 t = tbls[0]
                 cols = [str(c) for c in (t.get("columns") or [])]
@@ -132,6 +141,22 @@ def check(spec: dict):
                 if rows and len(rows[0]) != len(cols):
                     fails.append(f"{label}：汇总表每行列数（{len(rows[0])}）与表头（{len(cols)}）不一致")
                 oks.append(f"{label}：文献汇总表 {len(rows)} 行 × {len(cols)} 列")
+
+        # —— 追加模式最容易犯的两个错：同一篇被追加两次、brief 只写一半
+        names = [str(u.get("name", "")).strip() for u in units]
+        dup = sorted({n for n in names if n and names.count(n) > 1})
+        if dup:
+            # 只提醒不判失败：同名可能有正当理由（重读、同名子任务），
+            # 真正的重复拦截放在 append_unit.py（可用 --allow-dup 放行）。
+            warns.append(f"{label}：单元名重复，确认不是同一篇被追加了两次：{dup}")
+        for unit in units:
+            b = unit.get("brief") or {}
+            if not b:
+                continue
+            lack = [k for k in ("source", "date", "gist") if not b.get(k)]
+            if lack:
+                warns.append(f"{label} · 「{str(unit.get('name', ''))[:16]}」brief 缺 {lack}，"
+                             f"汇总表对应格子会空着")
 
         # —— 逐单元检查
         for ui, unit in enumerate(units, 1):

@@ -1,0 +1,53 @@
+{
+  "kind": "paper",
+  "unit": {
+    "name": "ReAct：推理与行动的交替",
+    "brief": {
+      "source": "ICLR 2023（CCF-A）",
+      "date": "2022-10",
+      "gist": "让检索回到推理链里，思考与行动交替推进。"
+    },
+    "pages": [
+      {
+        "type": "cards",
+        "roles": ["name", "source"],
+        "title": "ReAct：推理与行动的交替",
+        "entries": [
+          { "label": "标题", "value": "ReAct: Synergizing Reasoning and Acting in Language Models", "strong": true },
+          { "label": "出处", "value": "ICLR 2023（CCF-A）" },
+          { "label": "时间", "value": "2022-10（arXiv 2210.03629）" }
+        ],
+        "source": "原文 p.1"
+      },
+      {
+        "type": "image",
+        "roles": ["thesis", "problem", "argument"],
+        "title": "主张：思考与行动必须交替",
+        "bullets": [
+          "总观点：只推理不行动，模型会一路自圆其说；只行动不推理，拿到的观测无法复用。",
+          { "text": "论证：把观测写回上下文，作为下一轮推理的前提", "level": 1 },
+          "解决的问题：纯推理缺少外部事实，纯行动缺少结论沉淀。"
+        ],
+        "image": "figs/react_fig1.png",
+        "caption": "图 1　Thought–Act–Observation 循环（原文 Figure 1）",
+        "source": "原文 p.2 Figure 1",
+        "evidence": true,
+        "image_ratio": 0.56,
+        "takeaway": "关键不是加一句「请先思考」，而是让观测改写推理。"
+      },
+      {
+        "type": "table",
+        "roles": ["experiment", "mapping", "contribution", "insight"],
+        "title": "实验如何印证观点",
+        "columns": ["实验", "印证的观点", "证据位置"],
+        "rows": [
+          ["HotpotQA 多跳问答", "交替优于纯推理与纯行动", "Table 1"],
+          ["消融：去掉观测", "观测是增益来源", "Table 3"]
+        ],
+        "col_widths": [0.32, 0.44, 0.24],
+        "source": "原文 p.4–6",
+        "takeaway": "需要多步外部信息时交替优势最明显；我的综述可按此设对照。"
+      }
+    ]
+  }
+}

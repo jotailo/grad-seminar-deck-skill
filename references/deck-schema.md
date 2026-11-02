@@ -52,7 +52,23 @@ deck.json
 | `divider` | | `true` 时给这个单元单独加一页大编号分隔页（不计入 2–4 页预算，默认关） |
 | `slim` | | `true` 时允许 2 页精简版，缺失内容点降级为提醒而非失败 |
 | `no_evidence_reason` | | 确实无法出图时写原因，避免被判定成漏图 |
+| `brief` | | 文献汇总表那一行，见下方；论文类多篇时写它就不用手写汇总表 |
+| `session` | | 场次标签（如 `"2026-11-02"`），`build_deck.py --session` 按它挑单元 |
+| `added` | | 加入日期，`append_unit.py` 自动写，只在归档清单里用 |
 | `pages` | ✔ | 内容页，**2–4 页**，越界直接报错退出 |
+
+`brief` 子字段（三个都建议写，缺了会在检查里提醒）：
+
+| 子字段 | 对应汇总表列 |
+|---|---|
+| `source` | 出处（`ICLR 2023（CCF-A）`） |
+| `date` | 发布时间（`2022-10`） |
+| `gist` | 一句话核心内容（≤30 字，别写两句） |
+
+标题目默认取 `name`，要不一样就写 `brief.title`。
+
+**汇总表是自动的**：论文类有 ≥2 个单元、且每篇都写了 `brief.source` 时，`build_deck.py` 在分区页之后自动插一页汇总表，行数=篇数。
+若你在 `part.pages` 里手写了 `roles: ["summary_table"]` 的表，则用手写版、不再自动生成（不会出现两张）。
 
 ## page（页面）
 
@@ -113,13 +129,28 @@ deck.json
 
 | kind | 必备 roles |
 |---|---|
-| `paper` | `title` `source` `thesis` `argument` `problem` `contribution` `experiment` `mapping` `insight` |
+| `paper` | `name` `source` `thesis` `argument` `problem` `contribution` `experiment` `mapping` `insight` |
 | `experiment` | `name` `purpose` `setup` `finding` `limit` `next` `conclusion` |
 | `project` | `name` `progress` `problem` `plan` |
 
 另有两个种类级标签：
-- `summary_table`：文献汇总表（放在 `part.pages`，多篇论文时必须有一页）。
+- `summary_table`：文献汇总表（放在 `part.pages`；不手写则由 `brief` 自动生成）。
 - `mapping`：必须出现在 `table` 版式上，用来放「实验 ↔ 观点 ↔ 证据位置」。
+
+## 追加片段（fragment）规格
+
+`append_unit.py` 吃的是**一个单元**，不是整份 deck。两种写法等价：
+
+```json
+{ "kind": "paper", "unit": { "name": "...", "brief": {...}, "pages": [...] } }
+{ "kind": "paper", "name": "...", "brief": {...}, "pages": [...] }
+```
+
+- `kind` 必填（也可用 `--kind` 传），决定追加进哪个种类分区；没有该分区就按 `paper → experiment → project` 的顺序新建。
+- `part_title` / `part_subtitle` 可选，只在新建分区时用。
+- `pages` 必须 2–4 页，否则**在写文件前**就被拒（不会留下半截状态）。
+- 图片相对路径优先按 master 所在目录找；找不到而片段旁边有，就自动改写成绝对路径。
+- 追加时自动补 `added`（今天）；`--session` 会写成 `session`。
 
 ## 会报错 / 会提示的情况
 
@@ -128,7 +159,11 @@ deck.json
 | 单元内容页不是 2–4 页 | 错误（退出码 5） | 合并/拆分页面；临时放过 `--skip-budget-check` |
 | `image` 指向的文件不存在 | 错误（退出码 3） | 先按 `figure-capture.md` 裁图 |
 | `type` 未知 | 错误（退出码 2） | 只能用上表列出的版式 |
+| 追加同名单元 | 错误（退出码 6） | 改标题，或 `--allow-dup` |
+| 追加后内容检查不过 | 中止（检查自己的退出码） | `deck.json` 保持原样，改片段再追加 |
+| `--session` 没有任何单元匹配 | 错误（退出码 4） | 先给单元打标签，或去掉该参数 |
 | 正文 >260 字、结论条 >78 字 | 提示 | 拆页或删句 |
 | 末行只剩一两个字 | 提示 `[hint]` | 改写措辞，避免孤字 |
 | 内容占版面 <45% | 提示 | 补细节或与相邻页合并 |
+| `brief` 缺 source/date/gist | 提示 | 汇总表对应格子会空着 |
 | 图片有效 dpi <110 | 体检 FAIL | 用 300/400dpi 重渲染页面再裁 |
